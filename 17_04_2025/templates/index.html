@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Product Recommender</title>
+    <style>
+        /* CSS styles */
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary-color: #10b981;
+            --background-color: #f9fafb;
+            --card-color: #ffffff;
+            --text-color: #1f2937;
+            --text-light: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #0ea271;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-item {
+            flex: 1;
+            min-width: 200px;
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+
+        .profile-label {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .profile-value {
+            font-size: 1.2rem;
+        }
+
+        .recommendations-list {
+            list-style-type: none;
+        }
+
+        .recommendations-list li {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background-color: #f3f4f6;
+            border-radius: 0.25rem;
+            font-size: 1.1rem;
+        }
+
+        .recommendations-list li:nth-child(odd) {
+            background-color: #e5e7eb;
+        }
+
+        .visualization {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .visualization img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .loader-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #ef4444;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: var(--text-light);
+            float: right;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: var(--text-color);
+        }
+
+        .modal-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .viz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .viz-card {
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+        }
+
+        .viz-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .viz-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .viz-card-content {
+            padding: 1rem;
+        }
+
+        .viz-card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .viz-card-description {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .viz-full {
+            display: none;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .viz-full img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .viz-full-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .viz-full-description {
+            margin-bottom: 1.5rem;
+            color: var(--text-light);
+        }
+
+        .viz-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+        }
+
+        .btn-viz {
+            margin: 0 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .viz-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>E-commerce Product Recommender</h1>
+            <p class="subtitle">Get personalized product recommendations based on your profile</p>
+        </header>
+
+        <div class="card">
+            <h2 class="card-title">Your Profile</h2>
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" min="0" max="120" required>
+                    <div class="error-message" id="age-error">Please enter a valid age between 0 and 120.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <div class="error-message" id="gender-error">Please select a gender.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="device">Device Type</label>
+                    <select id="device" name="device" required>
+                        <option value="">Select device</option>
+                        <option value="Mobile">Mobile</option>
+                        <option value="Desktop">Desktop</option>
+                        <option value="Tablet">Tablet</option>
+                    </select>
+                    <div class="error-message" id="device-error">Please select a device type.</div>
+                </div>
+
+                <button type="submit" class="btn btn-block">Get Recommendations</button>
+            </form>
+        </div>
+
+        <div class="loader" id="loader">
+            <div class="loader-spinner"></div>
+            <p>Analyzing your profile and generating recommendations...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <h2 class="card-title">Analysis Results</h2>
+                
+                <h3>Your Profile</h3>
+                <div class="profile-info">
+                    <div class="profile-item">
+                        <div class="profile-label">Age</div>
+                        <div class="profile-value" id="result-age"></div>
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-label">Gender</div>
+                        <div class="profile-value" id="result-gender"></div>
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-label">Device</div>
+                        <div class="profile-value" id="result-device"></div>
+                    </div>
+                </div>
+
+                <h3>Your Customer Segment</h3>
+                <div class="profile-info">
+                    <div class="profile-item">
+                        <div class="profile-label">Cluster</div>
+                        <div class="profile-value" id="result-cluster"></div>
+                    </div>
+                    <div class="profile-item" style="flex: 2;">
+                        <div class="profile-label">Profile</div>
+                        <div class="profile-value" id="result-cluster-profile"></div>
+                    </div>
+                </div>
+
+                <h3>Recommended Products for You</h3>
+                <ul class="recommendations-list" id="recommendations-list">
+                    <!-- Recommendations will be inserted here -->
+                </ul>
+
+                <div class="visualization">
+                    <h3>Your Position in Customer Segments</h3>
+                    <img id="cluster-viz" src="/placeholder.svg" alt="Cluster visualization">
+                </div>
+
+                <div class="visualization">
+                    <h3>Top Recommended Products</h3>
+                    <img id="recommendations-viz" src="/placeholder.svg" alt="Recommendations visualization">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                <button id="try-again" class="btn btn-block">Try with a Different Profile</button>
+                <button id="view-training-viz" class="btn btn-block btn-secondary">View Training Visualizations</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Visualizations Modal -->
+    <div id="training-viz-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2 class="modal-title">Model Training Visualizations</h2>
+                <p>These visualizations were generated during the training of the recommendation model.</p>
+            </div>
+            <div class="modal-body">
+                <div class="viz-grid" id="viz-grid">
+                    <!-- Visualization cards will be inserted here -->
+                </div>
+                <div class="viz-full" id="viz-full">
+                    <h3 class="viz-full-title" id="viz-full-title"></h3>
+                    <p class="viz-full-description" id="viz-full-description"></p>
+                    <img id="viz-full-img" src="/placeholder.svg" alt="Full visualization">
+                    <div class="viz-nav">
+                        <button class="btn btn-secondary" id="back-to-grid">Back to Grid</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const userForm = document.getElementById('user-form');
+            const loader = document.getElementById('loader');
+            const results = document.getElementById('results');
+            const tryAgainBtn = document.getElementById('try-again');
+            const viewTrainingVizBtn = document.getElementById('view-training-viz');
+            const trainingVizModal = document.getElementById('training-viz-modal');
+            const closeModal = document.getElementById('close-modal');
+            const vizGrid = document.getElementById('viz-grid');
+            const vizFull = document.getElementById('viz-full');
+            const vizFullImg = document.getElementById('viz-full-img');
+            const vizFullTitle = document.getElementById('viz-full-title');
+            const vizFullDescription = document.getElementById('viz-full-description');
+            const backToGridBtn = document.getElementById('back-to-grid');
+
+            // Training visualizations
+            const trainingVisualizations = [
+                {
+                    id: "data_exploration",
+                    title: "Data Exploration",
+                    description: "Overview of customer demographics and product preferences",
+                    filename: "data_exploration.png"
+                },
+                {
+                    id: "cluster_evaluation",
+                    title: "Cluster Evaluation",
+                    description: "Metrics used to determine the optimal number of clusters",
+                    filename: "cluster_evaluation.png"
+                },
+                {
+                    id: "cluster_analysis",
+                    title: "Cluster Analysis",
+                    description: "Detailed analysis of customer segments",
+                    filename: "cluster_analysis.png"
+                },
+                {
+                    id: "cluster_products",
+                    title: "Cluster Products",
+                    description: "Top products for each customer segment",
+                    filename: "cluster_products.png"
+                }
+            ];
+
+            // Form validation
+            function validateForm() {
+                let isValid = true;
+                
+                // Validate age
+                const age = document.getElementById('age').value;
+                const ageError = document.getElementById('age-error');
+                if (!age || age < 0 || age > 120) {
+                    ageError.style.display = 'block';
+                    isValid = false;
+                } else {
+                    ageError.style.display = 'none';
+                }
+                
+                // Validate gender
+                const gender = document.getElementById('gender').value;
+                const genderError = document.getElementById('gender-error');
+                if (!gender) {
+                    genderError.style.display = 'block';
+                    isValid = false;
+                } else {
+                    genderError.style.display = 'none';
+                }
+                
+                // Validate device
+                const device = document.getElementById('device').value;
+                const deviceError = document.getElementById('device-error');
+                if (!device) {
+                    deviceError.style.display = 'block';
+                    isValid = false;
+                } else {
+                    deviceError.style.display = 'none';
+                }
+                
+                return isValid;
+            }
+
+            // Form submission
+            userForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!validateForm()) {
+                    return;
+                }
+                
+                // Show loader
+                loader.style.display = 'block';
+                
+                // Get form data
+                const formData = new FormData(userForm);
+                
+                // Send request to server
+                fetch('/recommend', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loader
+                    loader.style.display = 'none';
+                    
+                    // Update results
+                    document.getElementById('result-age').textContent = data.profile.age;
+                    document.getElementById('result-gender').textContent = data.profile.gender;
+                    document.getElementById('result-device').textContent = data.profile.device;
+                    document.getElementById('result-cluster').textContent = `Cluster ${data.cluster.id}`;
+                    document.getElementById('result-cluster-profile').textContent = data.cluster.profile;
+                    
+                    // Update recommendations list
+                    const recommendationsList = document.getElementById('recommendations-list');
+                    recommendationsList.innerHTML = '';
+                    data.recommendations.forEach((recommendation, index) => {
+                        const li = document.createElement('li');
+                        li.textContent = `${index + 1}. ${recommendation}`;
+                        recommendationsList.appendChild(li);
+                    });
+                    
+                    // Update visualizations
+                    document.getElementById('cluster-viz').src = data.visualizations.cluster;
+                    document.getElementById('recommendations-viz').src = data.visualizations.recommendations;
+                    
+                    // Show results
+                    results.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loader.style.display = 'none';
+                    alert('An error occurred while processing your request. Please try again.');
+                });
+            });
+            
+            // Try again button
+            tryAgainBtn.addEventListener('click', function() {
+                // Reset form
+                userForm.reset();
+                
+                // Hide results
+                results.style.display = 'none';
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            // View training visualizations button
+            viewTrainingVizBtn.addEventListener('click', function() {
+                // Populate visualization grid
+                vizGrid.innerHTML = '';
+                trainingVisualizations.forEach(viz => {
+                    const card = document.createElement('div');
+                    card.className = 'viz-card';
+                    card.innerHTML = `
+                        <img src="/static/${viz.filename}" alt="${viz.title}">
+                        <div class="viz-card-content">
+                            <h3 class="viz-card-title">${viz.title}</h3>
+                            <p class="viz-card-description">${viz.description}</p>
+                        </div>
+                    `;
+                    card.addEventListener('click', function() {
+                        // Show full visualization
+                        vizGrid.style.display = 'none';
+                        vizFull.style.display = 'block';
+                        vizFullImg.src = `/static/${viz.filename}`;
+                        vizFullTitle.textContent = viz.title;
+                        vizFullDescription.textContent = viz.description;
+                    });
+                    vizGrid.appendChild(card);
+                });
+
+                // Show grid, hide full view
+                vizGrid.style.display = 'grid';
+                vizFull.style.display = 'none';
+                
+                // Show modal
+                trainingVizModal.style.display = 'block';
+            });
+
+            // Back to grid button
+            backToGridBtn.addEventListener('click', function() {
+                vizFull.style.display = 'none';
+                vizGrid.style.display = 'grid';
+            });
+
+            // Close modal
+            closeModal.addEventListener('click', function() {
+                trainingVizModal.style.display = 'none';
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === trainingVizModal) {
+                    trainingVizModal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
